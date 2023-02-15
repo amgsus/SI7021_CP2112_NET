@@ -9,36 +9,57 @@ namespace HTU21D_CP2112 {
     public partial class MainForm : Form {
         public MainForm() {
             InitializeComponent();
-            notifyIcon.Icon = this.Icon;
         }
 
         private SensorHTU21D sensor = new SensorHTU21D();
 
-        private void refreshingTimer_Tick(object sender, EventArgs eventArgs) {
-            bool error = false;
+        private void backgroundWorker_DoWork(object sender, System.ComponentModel.DoWorkEventArgs eventArgs) {
+            for (;;) {
+                bool error = false;
 
-            if (!sensor.Connected) {
-                try {
-                    sensor.Connect();
-                    Debug.Print("Connection established");
-                } catch (Exception e) {
-                    Debug.Print(e.Message);
-                    error = true;
+                if (!sensor.Connected) {
+                    try {
+                        sensor.Connect();
+                        Debug.Print("Connection established");
+                    } catch (Exception e) {
+                        Debug.Print(e.Message);
+                        error = true;
+                    }
                 }
-            }
 
-            float temperature = 0;
-            float humidity = 0;
+                float temperature = 0;
+                float humidity = 0;
 
-            if (!error && sensor.Read(ref temperature, ref humidity)) {
-                lblTemperature.Text = string.Format("{0:0.0} °C", temperature);
-                lblHumidity.Text = string.Format("{0:0} %", humidity);
-                notifyIcon.Text = string.Format("Temperature: {0}\r\nHumidity: {1}", lblTemperature.Text, lblHumidity.Text);
-            } else {
-                lblTemperature.Text = "Oops!";
-                lblHumidity.Text = "";
-                notifyIcon.Text = "(ERROR) HTU21D Sensor";
+                if (false == error) {
+                    try {
+                        sensor.Read(ref temperature, ref humidity);
+                    } catch (Exception e) {
+                        try {
+                            sensor.Close();
+                        } catch {
+                            // Nothing.
+                        }
+                        Debug.Print(e.Message);
+                        error = true;
+                    }
+                }
+
+                Invoke(new Action(() => {
+                    if (error) {
+                        lblTemperature.Text = "Oops!";
+                        lblHumidity.Text = "";
+                    } else {
+                        lblTemperature.Text = string.Format("{0:0.0} °C", temperature);
+                        lblHumidity.Text = string.Format("{0:0} %", humidity);
+                    }
+                }));
+
+                Thread.Sleep(1000);
             }
+        }
+
+        private void MainForm_Load(object sender, EventArgs e) {
+            backgroundWorker.RunWorkerAsync();
         }
     }
 
