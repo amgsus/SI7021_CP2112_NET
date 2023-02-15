@@ -67,7 +67,7 @@
             this.MaximizeBox = false;
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "HTU21D Sensor";
+            this.Text = "Si7021 Sensor";
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.ResumeLayout(false);
 
